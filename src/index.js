@@ -162,6 +162,59 @@ app.post('/cliente/:cpf/ordem', async (req, res) => {
 });
 
 
+app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
+    const { cpf, id } = req.params;
+    const { nome, telefone, endereco, info_produto, defeito, solucao, fk_status_id } = req.body;
+
+    try {
+        // Verificar se o cliente existe
+        const { data: cliente, error: clienteError } = await supabase
+            .from('cliente')
+            .select('*')
+            .eq('cpf', cpf)
+            .single();
+
+        if (clienteError) return res.status(500).json({ error: clienteError.message });
+        if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
+
+        // Atualizar os dados do cliente
+        const { data: updatedCliente, error: updateClienteError } = await supabase
+            .from('cliente')
+            .update({ nome, telefone, endereco })
+            .eq('cpf', cpf)
+            .single();
+
+        if (updateClienteError) return res.status(500).json({ error: updateClienteError.message });
+
+        // Verificar se a ordem existe
+        const { data: ordem, error: ordemError } = await supabase
+            .from('ordem')
+            .select('*')
+            .eq('id', id)
+            .eq('fk_cliente_cpf', cpf)
+            .single();
+
+        if (ordemError) return res.status(500).json({ error: ordemError.message });
+        if (!ordem) return res.status(404).json({ error: "Ordem não encontrada para este cliente" });
+
+        // Atualizar os dados da ordem
+        const { data: updatedOrdem, error: updateOrdemError } = await supabase
+            .from('ordem')
+            .update({ info_produto, defeito, solucao, fk_status_id })
+            .eq('id', id)
+            .eq('fk_cliente_cpf', cpf)
+            .single();
+
+        if (updateOrdemError) return res.status(500).json({ error: updateOrdemError.message });
+
+        res.status(200).json({ updatedCliente, updatedOrdem });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
