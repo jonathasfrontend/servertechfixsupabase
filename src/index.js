@@ -1,0 +1,168 @@
+const express = require('express')
+const moment = require('moment');
+const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
+
+const corsConfig = require('./config/cors.config')
+
+const createSupabaseClient = require('./connectionBD/connectiondb');
+const supabase = createSupabaseClient();
+
+const app = express();
+app.use(express.json());
+app.use(cors(corsConfig));
+
+app.get('/cliente/:cpf', async (req, res) => {
+    const { cpf } = req.params;
+
+    const { data: cliente, error: clienteError } = await supabase
+        .from('cliente')
+        .select('*')
+        .eq('cpf', cpf)
+        .single();
+
+    if (clienteError) return res.status(500).json({ error: clienteError.message });
+    if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
+
+    const { data: ordens, error: ordemError } = await supabase
+        .from('ordem')
+        .select('*')
+        .eq('fk_cliente_cpf', cliente.cpf);
+
+    if (ordemError) return res.status(500).json({ error: ordemError.message });
+
+    res.status(200).json({ cliente, ordens });
+});
+
+app.get('/ultimas-ordens', async (req, res) => {
+    try {
+        // Buscar a última ordem de serviço para cada cliente
+        const { data: ordens, error: ordemError } = await supabase
+            .from('ordem')
+            .select('*, cliente(*)')
+            .order('data', { ascending: false });
+
+        if (ordemError) return res.status(500).json({ error: ordemError.message });
+
+        // Agrupar as ordens pelo CPF do cliente e pegar a última
+        const ultimasOrdens = [];
+        const seen = new Set();
+
+        for (const ordem of ordens) {
+            if (!seen.has(ordem.fk_cliente_cpf)) {
+                ultimasOrdens.push(ordem);
+                seen.add(ordem.fk_cliente_cpf);
+            }
+        }
+
+        res.status(200).json(ultimasOrdens);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/categoria', async (req, res) => {
+    try {
+        const { data: categorias, error } = await supabase
+            .from('categoria')
+            .select('*');
+
+        if (error) return res.status(500).json({ error: error.message });
+
+        res.status(200).json(categorias);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/status', async (req, res) => {
+    try {
+        const { data: statusList, error } = await supabase
+            .from('status')
+            .select('*');
+
+        if (error) return res.status(500).json({ error: error.message });
+
+        res.status(200).json(statusList);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.post('/cliente-e-ordem', async (req, res) => {
+    const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id } = req.body;
+    const data = moment().format('YYYY-MM-DD');
+
+    const uuid = uuidv4();
+    const id = String(uuid)
+    const cpfStr = String(cpf);
+
+    const { data: cliente, error: clienteError } = await supabase
+        .from('cliente')
+        .insert([{ cpf: cpfStr, nome, telefone, endereco }])
+        .select()
+        .single();
+
+    if (clienteError) return res.status(500).json({ error: clienteError.message });
+
+    const { data: ordem, error: ordemError } = await supabase
+        .from('ordem')
+        .insert([{
+            id,
+            info_produto,
+            defeito,
+            solucao,
+            garantia,
+            data,
+            fk_cliente_cpf: cliente.cpf,
+            fk_categoria_id,
+            fk_status_id
+        }]);
+
+    if (ordemError) return res.status(500).json({ error: ordemError.message });
+
+    res.status(201).json({ cliente, ordem });
+});
+
+app.post('/cliente/:cpf/ordem', async (req, res) => {
+    const { cpf } = req.params;
+    const { info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id } = req.body;
+    const data = moment().format('YYYY-MM-DD');
+
+    const uuid = uuidv4();
+    const id = String(uuid)
+
+    const { data: cliente, error: clienteError } = await supabase
+        .from('cliente')
+        .select('cpf')
+        .eq('cpf', cpf)
+        .single();
+
+    if (clienteError) return res.status(500).json({ error: clienteError.message });
+    if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
+
+    const { data: ordem, error: ordemError } = await supabase
+        .from('ordem')
+        .insert([{
+            id,
+            info_produto,
+            defeito,
+            solucao,
+            garantia,
+            data,
+            fk_cliente_cpf: cliente.cpf,
+            fk_categoria_id,
+            fk_status_id
+        }]);
+
+    if (ordemError) return res.status(500).json({ error: ordemError.message });
+
+    res.status(201).json(ordem);
+});
+
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor rodando na porta ${PORT}`);
+});
