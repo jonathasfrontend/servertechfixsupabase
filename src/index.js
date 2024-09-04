@@ -1,9 +1,18 @@
 const express = require('express')
 const moment = require('moment');
 const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
 const corsConfig = require('./config/cors.config')
+
+function generateToken(params = {}){
+    return jwt.sign(params, process.env.JWT_SECRET, {
+        expiresIn: '1h',
+    });
+}
+
 
 const createSupabaseClient = require('./connectionBD/connectiondb');
 const supabase = createSupabaseClient();
@@ -88,6 +97,9 @@ app.get('/status', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+const projectRouter = require('./controller/projectController');
+app.use('/projects', projectRouter);
 
 
 app.post('/cliente-e-ordem', async (req, res) => {
@@ -208,6 +220,90 @@ app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
         if (updateOrdemError) return res.status(500).json({ error: updateOrdemError.message });
 
         res.status(200).json({ updatedCliente, updatedOrdem });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.post('/register-admin', async (req, res) => {
+    const { nome, email, senha } = req.body;
+
+    try {
+        // Verificar se o email já existe
+        const { data: existingAdmin, error: checkError } = await supabase
+            .from('admin')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (existingAdmin) {
+            return res.status(400).json({ error: 'O email já está em uso' });
+        }
+
+        if (checkError && checkError.code !== 'PGRST116') {
+            return res.status(500).json({ error: checkError.message });
+        }
+
+        // Criptografar a senha
+        const hashedSenha = await bcrypt.hash(senha, 10);
+
+        const uuid = uuidv4();
+
+        // Inserir o novo administrador no banco de dados
+        const { data: newAdmin, error: insertError } = await supabase
+            .from('admin')
+            .insert([{ id: uuid, nome, email, senha: hashedSenha }])
+            .select()
+            .single();
+
+        if (insertError) {
+            return res.status(500).json({ error: insertError.message });
+        }
+
+        res.status(201).json({
+            message: 'Administrador cadastrado com sucesso!',
+            admin: newAdmin,
+            token: generateToken({id: newAdmin.id, email: newAdmin.email})
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/authenticate', async (req, res) => {
+    const { email, senha } = req.body;
+
+    try {
+        // Verificar se o administrador existe no banco de dados
+        const { data: admin, error: adminError } = await supabase
+            .from('admin')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (adminError) {
+            return res.status(500).json({ error: adminError.message });
+        }
+
+        if (!admin) {
+            return res.status(400).json({ error: 'Email ou senha incorretos' });
+        }
+
+        // Comparar a senha fornecida com a senha armazenada
+        const isPasswordValid = await bcrypt.compare(senha, admin.senha);
+
+        if (!isPasswordValid) {
+            return res.status(400).json({ error: 'Email ou senha incorretos' });
+        }
+
+        // Gerar um token JWT
+        const token = 
+
+        res.status(200).json({
+            message: 'Autenticação bem-sucedida',
+            token: generateToken({id: admin.id, email: admin.email})
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
