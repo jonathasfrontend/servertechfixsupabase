@@ -284,7 +284,7 @@ app.post('/authenticate', async (req, res) => {
         if (adminError) {
             return res.status(500).json({ error: adminError.message });
         }
-        if (!admin) {
+        if (!admin.email) {
             return res.status(400).json({ error: 'Email incorreto' });
         }
 
