@@ -302,6 +302,7 @@ app.post('/authenticate', async (req, res) => {
 
         res.status(200).json({
             message: 'Autenticação bem-sucedida',
+            nome: admin.nome,
             token: generateToken({id: admin.id, email: admin.email})
         });
     } catch (error) {
