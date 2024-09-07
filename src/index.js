@@ -285,12 +285,12 @@ app.post('/authenticate', async (req, res) => {
             return res.status(500).json({ error: adminError.message });
         }
         if (!admin) {
-            return res.status(400).json({ error: 'Email ou senha incorretos' });
+            return res.status(400).json({ error: 'Email incorreto' });
         }
 
         const isPasswordValid = await bcrypt.compare(senha, admin.senha);
         if (!isPasswordValid) {
-            return res.status(400).json({ error: 'Email ou senha incorretos' });
+            return res.status(400).json({ error: 'Senha incorreta' });
         }
 
         res.status(200).json({
