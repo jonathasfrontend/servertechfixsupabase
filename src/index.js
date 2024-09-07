@@ -275,7 +275,6 @@ app.post('/authenticate', async (req, res) => {
     const { email, senha } = req.body;
 
     try {
-        // Verificar se o administrador existe no banco de dados
         const { data: admin, error: adminError } = await supabase
             .from('admin')
             .select('*')
@@ -290,25 +289,25 @@ app.post('/authenticate', async (req, res) => {
             return res.status(400).json({ error: 'Email ou senha incorretos' });
         }
 
-        // Comparar a senha fornecida com a senha armazenada
         const isPasswordValid = await bcrypt.compare(senha, admin.senha);
 
         if (!isPasswordValid) {
             return res.status(400).json({ error: 'Email ou senha incorretos' });
         }
 
-        // Gerar um token JWT
-        const token = 
+        const token = generateToken({ id: admin.id, email: admin.email });
 
         res.status(200).json({
             message: 'Autenticação bem-sucedida',
             nome: admin.nome,
-            token: generateToken({id: admin.id, email: admin.email})
+            email: admin.email,
+            token
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 
 
