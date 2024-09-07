@@ -284,30 +284,25 @@ app.post('/authenticate', async (req, res) => {
         if (adminError) {
             return res.status(500).json({ error: adminError.message });
         }
-
         if (!admin) {
             return res.status(400).json({ error: 'Email ou senha incorretos' });
         }
 
         const isPasswordValid = await bcrypt.compare(senha, admin.senha);
-
         if (!isPasswordValid) {
             return res.status(400).json({ error: 'Email ou senha incorretos' });
         }
 
-        const token = generateToken({ id: admin.id, email: admin.email });
-
         res.status(200).json({
-            message: 'Autenticação bem-sucedida',
             nome: admin.nome,
             email: admin.email,
-            token
+            message: 'Autenticação bem-sucedida',
+            token: generateToken({id: admin.id, email: admin.email})
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
-
 
 
 
