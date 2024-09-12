@@ -98,12 +98,8 @@ app.get('/status', async (req, res) => {
     }
 });
 
-const projectRouter = require('./controller/projectController');
-app.use('/projects', projectRouter);
-
-
 app.post('/cliente-e-ordem', async (req, res) => {
-    const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id } = req.body;
+    const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
     const uuid = uuidv4();
@@ -129,7 +125,8 @@ app.post('/cliente-e-ordem', async (req, res) => {
             data,
             fk_cliente_cpf: cliente.cpf,
             fk_categoria_id,
-            fk_status_id
+            fk_status_id,
+            orcamento
         }]);
 
     if (ordemError) return res.status(500).json({ error: ordemError.message });
@@ -139,7 +136,7 @@ app.post('/cliente-e-ordem', async (req, res) => {
 
 app.post('/cliente/:cpf/ordem', async (req, res) => {
     const { cpf } = req.params;
-    const { info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id } = req.body;
+    const { info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
     const uuid = uuidv4();
@@ -165,7 +162,8 @@ app.post('/cliente/:cpf/ordem', async (req, res) => {
             data,
             fk_cliente_cpf: cliente.cpf,
             fk_categoria_id,
-            fk_status_id
+            fk_status_id,
+            orcamento
         }]);
 
     if (ordemError) return res.status(500).json({ error: ordemError.message });
@@ -176,7 +174,7 @@ app.post('/cliente/:cpf/ordem', async (req, res) => {
 
 app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
     const { cpf, id } = req.params;
-    const { nome, telefone, endereco, info_produto, defeito, solucao, fk_status_id } = req.body;
+    const { nome, telefone, endereco, info_produto, defeito, solucao, fk_status_id, orcamento } = req.body;
 
     try {
         // Verificar se o cliente existe
@@ -212,7 +210,7 @@ app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
         // Atualizar os dados da ordem
         const { data: updatedOrdem, error: updateOrdemError } = await supabase
             .from('ordem')
-            .update({ info_produto, defeito, solucao, fk_status_id })
+            .update({ info_produto, defeito, solucao, fk_status_id, orcamento })
             .eq('id', id)
             .eq('fk_cliente_cpf', cpf)
             .single();
