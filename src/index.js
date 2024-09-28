@@ -21,27 +21,29 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsConfig));
 
-app.get('/cliente/:cpf', async (req, res) => {
-    const { cpf } = req.params;
+app.get('/produto/:id', async (req, res) => {
+    const { id } = req.params;
+
+    const { data: ordem, error: ordemError } = await supabase
+        .from('ordem')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (ordemError) return res.status(500).json({ error: ordemError.message });
+    if (!ordem) return res.status(404).json({ error: "Ordem não encontrada" });
 
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
         .select('*')
-        .eq('cpf', cpf)
+        .eq('cpf', ordem.fk_cliente_cpf)
         .single();
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
-    if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
 
-    const { data: ordens, error: ordemError } = await supabase
-        .from('ordem')
-        .select('*')
-        .eq('fk_cliente_cpf', cliente.cpf);
-
-    if (ordemError) return res.status(500).json({ error: ordemError.message });
-
-    res.status(200).json({ cliente, ordens });
+    res.status(200).json({ cliente, ordem });
 });
+
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
