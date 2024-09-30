@@ -1,4 +1,4 @@
-const whitelist = ['https://techfixfr.vercel.app', 'http://localhost:5173'];
+const whitelist = ['https://techfixfr.vercel.app', 'https://techfixfr.vercel.app/*', 'http://localhost:5173/', 'http://localhost:5173/*'];
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -10,3 +10,5 @@ const corsOptions = {
   },
   methods: ['GET', 'PUT', 'POST', 'DELETE']
 };
+
+module.exports = { corsOptions };
