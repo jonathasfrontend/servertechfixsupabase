@@ -99,6 +99,23 @@ app.get('/status', async (req, res) => {
     }
 });
 
+app.get('/admins', async (req, res) => {
+    try {
+        const { data: admins, error: adminsError } = await supabase
+            .from('admin')
+            .select('*');
+
+        if (adminsError) {
+            return res.status(500).json({ error: adminsError.message });
+        }
+
+        res.status(200).json(admins);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
 app.post('/cliente-e-ordem', async (req, res) => {
     const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
@@ -303,21 +320,6 @@ app.post('/authenticate', async (req, res) => {
     }
 });
 
-app.get('/admins', async (req, res) => {
-    try {
-        const { data: admins, error: adminsError } = await supabase
-            .from('admin')
-            .select('*');
-
-        if (adminsError) {
-            return res.status(500).json({ error: adminsError.message });
-        }
-
-        res.status(200).json(admins);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
 
 
 const PORT = process.env.PORT || 3000;
