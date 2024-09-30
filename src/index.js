@@ -27,22 +27,22 @@ app.get('/produto/:id', async (req, res) => {
     const { data: ordem, error: ordemError } = await supabase
         .from('ordem')
         .select('*')
-        .eq('id', id)
-        .single();
+        .eq('fk_cliente_cpf', id); // Removi o .single() para pegar todas as ordens
 
     if (ordemError) return res.status(500).json({ error: ordemError.message });
-    if (!ordem) return res.status(404).json({ error: "Ordem não encontrada" });
+    if (!ordem || ordem.length === 0) return res.status(404).json({ error: "Ordem não encontrada" });
 
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
         .select('*')
-        .eq('cpf', ordem.fk_cliente_cpf)
-        .single();
+        .eq('cpf', id)
+        .single(); // Aqui pode usar o .single() já que estamos buscando um único cliente
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
 
-    res.status(200).json({ cliente, ordem });
+    res.status(200).json({ cliente, ordens: ordem }); // Retornando todas as ordens no plural
 });
+
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
