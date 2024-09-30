@@ -5,7 +5,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 
-const { corsConfig } = require('./config/cors.config')
+// const { corsConfig } = require('./config/cors.config')
 
 function generateToken(params = {}){
     return jwt.sign(params, process.env.JWT_SECRET, {
@@ -19,7 +19,7 @@ const supabase = createSupabaseClient();
 
 const app = express();
 app.use(express.json());
-app.use(cors(corsConfig));
+// app.use(cors(corsConfig));
 
 app.get('/produto/:id', async (req, res) => {
     const { id } = req.params;
