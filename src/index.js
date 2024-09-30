@@ -44,7 +44,6 @@ app.get('/produto/:id', async (req, res) => {
     res.status(200).json({ cliente, ordem });
 });
 
-
 app.get('/ultimas-ordens', async (req, res) => {
     try {
         // Buscar a última ordem de serviço para cada cliente
