@@ -43,6 +43,36 @@ app.get('/produto/:cpf', async (req, res) => {
     res.status(200).json({ cliente, ordens });
 });
 
+app.get('/cliente/:cpf/ordem/:id', async (req, res) => {
+    const { cpf, id } = req.params;
+
+    try {
+        // Verificar se o cliente existe
+        const { data: cliente, error: clienteError } = await supabase
+            .from('cliente')
+            .select('*')
+            .eq('cpf', cpf)
+            .single();
+
+        if (clienteError) return res.status(500).json({ error: clienteError.message });
+        if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
+
+        // Verificar se a ordem existe
+        const { data: ordem, error: ordemError } = await supabase
+            .from('ordem')
+            .select('*')
+            .eq('id', id)
+            .eq('fk_cliente_cpf', cpf)
+            .single();
+
+        if (ordemError) return res.status(500).json({ error: ordemError.message });
+        if (!ordem) return res.status(404).json({ error: "Ordem não encontrada para este cliente" });
+
+        res.status(200).json({ cliente, ordem });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
