@@ -21,29 +21,28 @@ const app = express();
 app.use(express.json());
 app.use(cors(corsConfig));
 
-app.get('/produto/:id', async (req, res) => {
-    const { id } = req.params;
+app.get('/produto/:cpf', async (req, res) => {
+    const { cpf } = req.params;
 
-    // Buscar todas as ordens do cliente
     const { data: ordens, error: ordemError } = await supabase
         .from('ordem')
         .select('*')
-        .eq('fk_cliente_cpf', id);
+        .eq('fk_cliente_cpf', cpf);
 
     if (ordemError) return res.status(500).json({ error: ordemError.message });
     if (!ordens || ordens.length === 0) return res.status(404).json({ error: "Nenhuma ordem encontrada" });
 
-    // Buscar os dados do cliente
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
         .select('*')
-        .eq('cpf', id)
+        .eq('cpf', cpf)
         .single();
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
 
-    res.status(200).json({ cliente, ordens });  // Enviar lista de ordens
+    res.status(200).json({ cliente, ordens });
 });
+
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
