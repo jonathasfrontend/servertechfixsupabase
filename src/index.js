@@ -24,25 +24,26 @@ app.use(cors(corsConfig));
 app.get('/produto/:id', async (req, res) => {
     const { id } = req.params;
 
-    const { data: ordem, error: ordemError } = await supabase
+    // Buscar todas as ordens do cliente
+    const { data: ordens, error: ordemError } = await supabase
         .from('ordem')
         .select('*')
-        .eq('fk_cliente_cpf', id); // Removi o .single() para pegar todas as ordens
+        .eq('fk_cliente_cpf', id);
 
     if (ordemError) return res.status(500).json({ error: ordemError.message });
-    if (!ordem || ordem.length === 0) return res.status(404).json({ error: "Ordem não encontrada" });
+    if (!ordens || ordens.length === 0) return res.status(404).json({ error: "Nenhuma ordem encontrada" });
 
+    // Buscar os dados do cliente
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
         .select('*')
         .eq('cpf', id)
-        .single(); // Aqui pode usar o .single() já que estamos buscando um único cliente
+        .single();
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
 
-    res.status(200).json({ cliente, ordens: ordem }); // Retornando todas as ordens no plural
+    res.status(200).json({ cliente, ordens });  // Enviar lista de ordens
 });
-
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
