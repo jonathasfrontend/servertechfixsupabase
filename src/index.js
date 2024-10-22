@@ -13,7 +13,6 @@ function generateToken(params = {}){
     });
 }
 
-
 const createSupabaseClient = require('./connectionBD/connectiondb');
 const supabase = createSupabaseClient();
 
@@ -57,7 +56,6 @@ app.get('/cliente/:cpf/ordem/:id', async (req, res) => {
         if (clienteError) return res.status(500).json({ error: clienteError.message });
         if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
 
-        // Verificar se a ordem existe
         const { data: ordem, error: ordemError } = await supabase
             .from('ordem')
             .select('*')
@@ -76,15 +74,13 @@ app.get('/cliente/:cpf/ordem/:id', async (req, res) => {
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
-        // Buscar a última ordem de serviço para cada cliente
         const { data: ordens, error: ordemError } = await supabase
             .from('ordem')
             .select('*, cliente(*)')
             .order('data', { ascending: false });
 
         if (ordemError) return res.status(500).json({ error: ordemError.message });
-
-        // Agrupar as ordens pelo CPF do cliente e pegar a última
+        
         const ultimasOrdens = [];
         const seen = new Set();
 
@@ -140,6 +136,24 @@ app.get('/admins', async (req, res) => {
         }
 
         res.status(200).json(admins);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/pesquisa/:search', async (req, res) => {
+    const { search } = req.params;
+
+    try {
+        const { data: clientes, error: clienteError } = await supabase
+            .from('cliente')
+            .select('*, ordem(*)')
+            .or(`cpf.eq.${search},nome.ilike.%${search}%,telefone.ilike.%${search}%`);
+
+        if (clienteError) return res.status(500).json({ error: clienteError.message });
+        if (!clientes || clientes.length === 0) return res.status(404).json({ error: "Nenhum cliente encontrado" });
+
+        res.status(200).json(clientes);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
