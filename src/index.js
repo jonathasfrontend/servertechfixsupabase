@@ -73,7 +73,6 @@ app.get('/cliente/:clienteId/ordem/:ordemId', async (req, res) => {
     }
 });
 
-
 app.get('/ultimas-ordens', async (req, res) => {
     try {
         const { data: ordens, error: ordemError } = await supabase
@@ -82,16 +81,22 @@ app.get('/ultimas-ordens', async (req, res) => {
             .order('data', { ascending: false });
 
         if (ordemError) return res.status(500).json({ error: ordemError.message });
-        
-        const ultimasOrdens = [];
-        const seen = new Set();
 
-        for (const ordem of ordens) {
-            if (!seen.has(ordem.fk_cliente_cpf)) {
-                ultimasOrdens.push(ordem);
-                seen.add(ordem.fk_cliente_cpf);
+        // Agrupar ordens por cliente
+        const ordensPorCliente = ordens.reduce((acc, ordem) => {
+            const clienteId = ordem.cliente.id;
+            if (!acc[clienteId]) {
+                acc[clienteId] = {
+                    cliente: ordem.cliente,
+                    ordens: []
+                };
             }
-        }
+            acc[clienteId].ordens.push(ordem);
+            return acc;
+        }, {});
+
+        // Transformar o objeto em uma lista para resposta
+        const ultimasOrdens = Object.values(ordensPorCliente);
 
         res.status(200).json(ultimasOrdens);
     } catch (error) {
