@@ -163,7 +163,7 @@ app.get('/pesquisa/:search', async (req, res) => {
 
 
 app.post('/cliente-e-ordem', async (req, res) => {
-    const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
+    const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
     const clienteId = uuidv4(); // Gera um UUID para o cliente
@@ -186,7 +186,6 @@ app.post('/cliente-e-ordem', async (req, res) => {
             info_produto,
             defeito,
             solucao,
-            garantia,
             data,
             fk_cliente_id: cliente.id,  // Relaciona o ID do cliente na tabela ordem
             fk_categoria_id,
