@@ -200,7 +200,7 @@ app.post('/cliente-e-ordem', async (req, res) => {
 
 app.post('/cliente/:id/ordem', async (req, res) => {
     const { id } = req.params;
-    const { info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
+    const { info_produto, defeito, solucao, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
     const uuid = uuidv4();
@@ -224,7 +224,6 @@ app.post('/cliente/:id/ordem', async (req, res) => {
             info_produto,
             defeito,
             solucao,
-            garantia,
             data,
             fk_cliente_id: cliente.id,  // Alterado para o ID do cliente
             fk_categoria_id,
