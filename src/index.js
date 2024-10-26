@@ -42,26 +42,26 @@ app.get('/produto/:id', async (req, res) => {
     res.status(200).json({ cliente, ordens });
 });
 
-
-app.get('/cliente/:cpf/ordem/:id', async (req, res) => {
-    const { cpf, id } = req.params;
+app.get('/cliente/:clienteId/ordem/:ordemId', async (req, res) => {
+    const { clienteId, ordemId } = req.params;
 
     try {
-        // Verificar se o cliente existe
+        // Verificar se o cliente existe usando o ID
         const { data: cliente, error: clienteError } = await supabase
             .from('cliente')
             .select('*')
-            .eq('cpf', cpf)
+            .eq('id', clienteId)
             .single();
 
         if (clienteError) return res.status(500).json({ error: clienteError.message });
         if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
 
+        // Buscar a ordem específica para o cliente pelo ID
         const { data: ordem, error: ordemError } = await supabase
             .from('ordem')
             .select('*')
-            .eq('id', id)
-            .eq('fk_cliente_cpf', cpf)
+            .eq('id', ordemId)
+            .eq('fk_cliente_id', clienteId)  // Relaciona a ordem com o ID do cliente
             .single();
 
         if (ordemError) return res.status(500).json({ error: ordemError.message });
@@ -72,6 +72,7 @@ app.get('/cliente/:cpf/ordem/:id', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
 
 app.get('/ultimas-ordens', async (req, res) => {
     try {
@@ -165,28 +166,29 @@ app.post('/cliente-e-ordem', async (req, res) => {
     const { nome, telefone, endereco, cpf, info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
-    const uuid = uuidv4();
-    const id = String(uuid)
-    const cpfStr = String(cpf);
+    const clienteId = uuidv4(); // Gera um UUID para o cliente
+    const ordemId = uuidv4();   // Gera um UUID para a ordem
 
+    // Insere o novo cliente com o ID gerado
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
-        .insert([{ cpf: cpfStr, nome, telefone, endereco }])
+        .insert([{ id: clienteId, cpf: String(cpf), nome, telefone, endereco }])
         .select()
         .single();
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
 
+    // Insere a nova ordem associada ao ID do cliente recém-criado
     const { data: ordem, error: ordemError } = await supabase
         .from('ordem')
         .insert([{
-            id,
+            id: ordemId,
             info_produto,
             defeito,
             solucao,
             garantia,
             data,
-            fk_cliente_cpf: cliente.cpf,
+            fk_cliente_id: cliente.id,  // Relaciona o ID do cliente na tabela ordem
             fk_categoria_id,
             fk_status_id,
             orcamento
@@ -197,33 +199,35 @@ app.post('/cliente-e-ordem', async (req, res) => {
     res.status(201).json({ cliente, ordem });
 });
 
-app.post('/cliente/:cpf/ordem', async (req, res) => {
-    const { cpf } = req.params;
+app.post('/cliente/:id/ordem', async (req, res) => {
+    const { id } = req.params;
     const { info_produto, defeito, solucao, garantia, fk_categoria_id, fk_status_id, orcamento } = req.body;
     const data = moment().format('YYYY-MM-DD');
 
     const uuid = uuidv4();
-    const id = String(uuid)
+    const ordemId = String(uuid);
 
+    // Buscar cliente pelo ID
     const { data: cliente, error: clienteError } = await supabase
         .from('cliente')
-        .select('cpf')
-        .eq('cpf', cpf)
+        .select('id')
+        .eq('id', id)
         .single();
 
     if (clienteError) return res.status(500).json({ error: clienteError.message });
     if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
 
+    // Inserir nova ordem de serviço associada ao ID do cliente
     const { data: ordem, error: ordemError } = await supabase
         .from('ordem')
         .insert([{
-            id,
+            id: ordemId,
             info_produto,
             defeito,
             solucao,
             garantia,
             data,
-            fk_cliente_cpf: cliente.cpf,
+            fk_cliente_id: cliente.id,  // Alterado para o ID do cliente
             fk_categoria_id,
             fk_status_id,
             orcamento
