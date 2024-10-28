@@ -242,12 +242,12 @@ app.post('/cliente/:id/ordem', async (req, res) => {
 });
 
 
-app.put('/cliente/:clienteId/ordem/:id', async (req, res) => {
-    const { clienteId, id } = req.params;
-    const { nome, telefone, endereco, info_produto, defeito, solucao, fk_status_id, orcamento } = req.body;
+app.put('/cliente/:clienteId/ordem/:ordemId', async (req, res) => {
+    const { clienteId, ordemId } = req.params;
+    const { info_produto, defeito, solucao, fk_categoria_id, fk_status_id, orcamento } = req.body;
 
     try {
-        // Verificar se o cliente existe
+        // Verifica se o cliente existe
         const { data: cliente, error: clienteError } = await supabase
             .from('cliente')
             .select('*')
@@ -257,37 +257,36 @@ app.put('/cliente/:clienteId/ordem/:id', async (req, res) => {
         if (clienteError) return res.status(500).json({ error: clienteError.message });
         if (!cliente) return res.status(404).json({ error: "Cliente não encontrado" });
 
-        // Atualizar os dados do cliente
-        const { data: updatedCliente, error: updateClienteError } = await supabase
-            .from('cliente')
-            .update({ nome, telefone, endereco })
-            .eq('id', clienteId)
-            .single();
-
-        if (updateClienteError) return res.status(500).json({ error: updateClienteError.message });
-
-        // Verificar se a ordem existe para o cliente especificado
+        // Verifica se a ordem existe e pertence ao cliente
         const { data: ordem, error: ordemError } = await supabase
             .from('ordem')
             .select('*')
-            .eq('id', id)
-            .eq('fk_cliente_id', clienteId)  // Aqui usamos `fk_cliente_id` que deve referenciar o `id` do cliente na tabela `ordem`
+            .eq('id', ordemId)
+            .eq('fk_cliente_id', clienteId)
             .single();
 
         if (ordemError) return res.status(500).json({ error: ordemError.message });
-        if (!ordem) return res.status(404).json({ error: "Ordem não encontrada para este cliente" });
+        if (!ordem) return res.status(404).json({ error: "Ordem de serviço não encontrada para este cliente" });
 
-        // Atualizar os dados da ordem
-        const { data: updatedOrdem, error: updateOrdemError } = await supabase
+        // Atualiza a ordem com os novos dados
+        const { data: updatedOrdem, error: updateError } = await supabase
             .from('ordem')
-            .update({ info_produto, defeito, solucao, fk_status_id, orcamento })
-            .eq('id', id)
-            .eq('fk_cliente_id', clienteId)  // Também atualizamos com `fk_cliente_id`
-            .single();
+            .update({
+                info_produto,
+                defeito,
+                solucao,
+                fk_categoria_id,
+                fk_status_id,
+                orcamento,
+            })
+            .eq('id', ordemId);
 
-        if (updateOrdemError) return res.status(500).json({ error: updateOrdemError.message });
+        if (updateError) return res.status(500).json({ error: updateError.message });
 
-        res.status(200).json({ updatedCliente, updatedOrdem });
+        res.status(200).json({
+            message: "Ordem de serviço atualizada com sucesso",
+            ordem: updatedOrdem,
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
