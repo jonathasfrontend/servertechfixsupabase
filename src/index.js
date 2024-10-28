@@ -242,16 +242,16 @@ app.post('/cliente/:id/ordem', async (req, res) => {
 });
 
 
-app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
-    const { cpf, id } = req.params;
+app.put('/cliente/:clienteId/ordem/:id', async (req, res) => {
+    const { clienteId, id } = req.params;
     const { nome, telefone, endereco, info_produto, defeito, solucao, fk_status_id, orcamento } = req.body;
 
     try {
         // Verificar se o cliente existe
-        const { data: cliente, error: clienteError } = await supabase
+        const { data: cliente, error: clienteError } = await supabase""
             .from('cliente')
             .select('*')
-            .eq('cpf', cpf)
+            .eq('id', clienteId)
             .single();
 
         if (clienteError) return res.status(500).json({ error: clienteError.message });
@@ -261,17 +261,17 @@ app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
         const { data: updatedCliente, error: updateClienteError } = await supabase
             .from('cliente')
             .update({ nome, telefone, endereco })
-            .eq('cpf', cpf)
+            .eq('id', clienteId)
             .single();
 
         if (updateClienteError) return res.status(500).json({ error: updateClienteError.message });
 
-        // Verificar se a ordem existe
+        // Verificar se a ordem existe para o cliente especificado
         const { data: ordem, error: ordemError } = await supabase
             .from('ordem')
             .select('*')
             .eq('id', id)
-            .eq('fk_cliente_cpf', cpf)
+            .eq('fk_cliente_id', clienteId)  // Aqui usamos `fk_cliente_id` que deve referenciar o `id` do cliente na tabela `ordem`
             .single();
 
         if (ordemError) return res.status(500).json({ error: ordemError.message });
@@ -282,7 +282,7 @@ app.put('/cliente/:cpf/ordem/:id', async (req, res) => {
             .from('ordem')
             .update({ info_produto, defeito, solucao, fk_status_id, orcamento })
             .eq('id', id)
-            .eq('fk_cliente_cpf', cpf)
+            .eq('fk_cliente_id', clienteId)  // Também atualizamos com `fk_cliente_id`
             .single();
 
         if (updateOrdemError) return res.status(500).json({ error: updateOrdemError.message });
