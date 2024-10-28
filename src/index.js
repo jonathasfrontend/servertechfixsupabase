@@ -248,7 +248,7 @@ app.put('/cliente/:clienteId/ordem/:id', async (req, res) => {
 
     try {
         // Verificar se o cliente existe
-        const { data: cliente, error: clienteError } = await supabase""
+        const { data: cliente, error: clienteError } = await supabase
             .from('cliente')
             .select('*')
             .eq('id', clienteId)
