@@ -244,7 +244,7 @@ app.post('/cliente/:id/ordem', async (req, res) => {
 
 app.put('/cliente/:clienteId/ordem/:ordemId', async (req, res) => {
     const { clienteId, ordemId } = req.params;
-    const { info_produto, defeito, solucao, fk_categoria_id, fk_status_id, orcamento } = req.body;
+    const { info_produto, defeito, solucao, fk_status_id, orcamento } = req.body;
 
     try {
         // Verifica se o cliente existe
@@ -275,7 +275,6 @@ app.put('/cliente/:clienteId/ordem/:ordemId', async (req, res) => {
                 info_produto,
                 defeito,
                 solucao,
-                fk_categoria_id,
                 fk_status_id,
                 orcamento,
             })
