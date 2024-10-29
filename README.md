@@ -23,13 +23,13 @@ Este documento descreve o backend de uma aplicação de gerenciamento de ordens 
 ## Instalação
 1. Clone o repositório:
 ```bash
-   git clone <URL-do-repositório>
-   cd <nome-do-repositório>
+git clone <URL-do-repositório>
+cd <nome-do-repositório>
 ```
 
 2. Instale as dependências:
 ```bash
-    npm install
+npm install
 ```
 
 3. Crie um arquivo .env na raiz do projeto com as seguintes variáveis:
@@ -39,7 +39,7 @@ Este documento descreve o backend de uma aplicação de gerenciamento de ordens 
 
 4.Inicie o servidor:
 ```bash
-    npm start
+npm start
 ```
 
 ## Configuração
@@ -160,17 +160,17 @@ Este documento descreve o backend de uma aplicação de gerenciamento de ordens 
     * ```500 Internal Server Error```: Erro de execução.
 
 ## Dependências
-    * Express: Servidor web.
-    * Moment: Manipulação de datas.
-    * CORS: Configuração de permissão de origens cruzadas.
-    * Bcrypt: Hash de senhas.
-    * JWT: Autenticação com tokens.
-    * UUID: Gerador de identificadores únicos.
-    * Supabase: Cliente de banco de dados.
+* Express: Servidor web.
+* Moment: Manipulação de datas.
+* CORS: Configuração de permissão de origens cruzadas.
+* Bcrypt: Hash de senhas.
+* JWT: Autenticação com tokens.
+* UUID: Gerador de identificadores únicos.
+* Supabase: Cliente de banco de dados.
 
 ## Funções Auxiliares
 ```js
-    generateToken(params)
+generateToken(params)
 ```
 Gera um token JWT com validade de 1 hora.
 
