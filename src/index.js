@@ -3,6 +3,7 @@ const moment = require('moment');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const puppeteer = require('puppeteer');
 const { v4: uuidv4 } = require('uuid');
 
 const { corsConfig } = require('./config/cors.config')
@@ -161,6 +162,67 @@ app.get('/pesquisa/:search', async (req, res) => {
         if (!clientes || clientes.length === 0) return res.status(404).json({ error: "Nenhum cliente encontrado" });
 
         res.status(200).json(clientes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/ordem/:ordemId/download', async (req, res) => {
+    const { ordemId } = req.params;
+
+    try {
+        // Buscando dados da ordem pelo ID
+        const { data: ordem, error } = await supabase
+            .from('ordem')
+            .select('*')
+            .eq('id', ordemId)
+            .single();
+
+        if (error || !ordem) {
+            return res.status(404).json({ error: "Ordem não encontrada" });
+        }
+
+        // Gerando o PDF com Puppeteer
+        const browser = await puppeteer.launch();
+        const page = await browser.newPage();
+
+        // Criar conteúdo HTML para o PDF
+        const content = `
+            <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; }
+                        h1 { color: #333; }
+                        p { font-size: 14px; }
+                        .bold { font-weight: bold; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Ordem de Serviço: ${ordem.id}</h1>
+                    <p><span class="bold">CPF do Cliente:</span> ${ordem.fk_cliente_cpf}</p>
+                    <p><span class="bold">Data:</span> ${ordem.data}</p>
+                    <p><span class="bold">Produto:</span> ${ordem.info_produto}</p>
+                    <p><span class="bold">Defeito:</span> ${ordem.defeito}</p>
+                    <p><span class="bold">Solução:</span> ${ordem.solucao}</p>
+                    <p><span class="bold">Garantia:</span> ${ordem.garantia}</p>
+                    <p><span class="bold">Orçamento:</span> ${ordem.orcamento}</p>
+                </body>
+            </html>
+        `;
+
+        // Setando o conteúdo no Puppeteer
+        await page.setContent(content);
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+
+        await browser.close();
+
+        // Enviando o PDF como resposta
+        res.set({
+            'Content-Type': 'application/pdf',
+            'Content-Disposition': `attachment; filename="ordem-${ordemId}.pdf"`,
+        });
+        res.send(pdfBuffer);
+
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
